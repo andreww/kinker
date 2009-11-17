@@ -51,12 +51,11 @@ tck = interpolate.splrep(x,y,s=0)
 yfine = interpolate.splev(xfine,tck,der=0)
 
 # Plot data 
-plt.figure()
+plt.figure(1)
 plt.plot(x,y,'o',xfine,yfine,'-')
 plt.ylabel('U')
 plt.xlabel('u')
 plt.title('U(u)')
-plt.show()
 
 # Calculate Sd...
 Sd = average(yfine) 
@@ -76,13 +75,12 @@ print "w_k has a calculated value of %5g m " % w_k
 invsqrt_yfine = 1.0/(sqrt(yfine-yfine[0]))
 invsqrt_y = 1.0/(sqrt(y-y[0]))
 
-plt.figure()
+plt.figure(2)
 # NB - avoid plotting end points (infnty)
 plt.plot(x[1:-1],invsqrt_y[1:-1],'o',xfine[1:-1],invsqrt_yfine[1:-1],'-')
 plt.ylabel('U^-1/2')
 plt.xlabel('u')
 plt.title('U(u)^-1/2')
-plt.show()
 
 # Calculate single kink shape - equation 5 
 # of Seeger 1981. Note that U(0) = 0. (no applied stress)
@@ -93,12 +91,11 @@ kink_energy = sqrt(2.0*Sd) * (num_integ(xfine,sqrt(yfine-yfine[0])))[-1]
 print "Energy of a geometrical kink = %10.10g J " % kink_energy 
 print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy * Na)/1000)
 
-plt.figure()
+plt.figure(3)
 plt.plot(xfine[1:],zdiff,'-')
 plt.ylabel('z-z0')
 plt.xlabel('u')
 plt.title('Geometrical kink shape')
-plt.show()
 
 
 # Lower limits (u_0) come from eq.4:
@@ -138,12 +135,11 @@ for i in xrange(len(sigma_b)):
             break
 
 
-plt.figure()
+plt.figure(3)
 plt.plot(xfine,yderfine,'--',u_0,sigma_b,'o',array([xfine[sigma_p_index]]),array([sigma_p]),'x')
 plt.title('Derivative of potential')
 plt.ylabel('dU/du')
 plt.xlabel('u')
-plt.show()
 
 # Calculate kink pair formation v's stress and report
 
@@ -166,7 +162,7 @@ for i in xrange(len(sigma_b)):
                  (1.0/(sqrt(yfine[(u_0_index[i]+1):u_max_index[i]]-yfine[u_0_index[i]]))))))
 
 
-plt.figure()
+plt.figure(4)
 for i in xrange(len(sigma_b)):
     plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
    # plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(5.0-zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
