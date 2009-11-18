@@ -105,8 +105,10 @@ plt.title('Geometrical kink shape')
 
 # Lower limits (u_0) come from eq.4:
 
-sigma_b = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.25*sigma_p, \
-                 0.5*sigma_p, 0.75*sigma_p, 0.9*sigma_p, 0.99*sigma_p, 0.999*sigma_p])
+sigma_b = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.2*sigma_p, 0.25*sigma_p, \
+                 0.3*sigma_p, 0.4*sigma_p, \
+                 0.5*sigma_p, 0.6*sigma_p, 0.7*sigma_p, \
+                 0.75*sigma_p, 0.8*sigma_p,  0.9*sigma_p, 0.99*sigma_p, 0.999*sigma_p])
 u_0 = zeros(sigma_b.shape, dtype=sigma_b.dtype)
 u_0_index = zeros(sigma_b.shape, dtype=integer) # What index do we want to start from?
 for i in xrange(len(sigma_b)):
@@ -122,12 +124,14 @@ u_max = zeros(sigma_b.shape, dtype=sigma_b.dtype)
 u_max_index = zeros(sigma_b.shape, dtype=integer)
 U_u_max = zeros(sigma_b.shape, dtype=sigma_b.dtype)
 inner_func = zeros((len(sigma_b),len(xfine)))
+inner_func2 = zeros((len(sigma_b),len(xfine)))
 
 for i in xrange(len(sigma_b)):
     # Build an array inner_func = U(u) - U(u0) - (u - u_0)b_sigma
     # First index over values of b_sigma and second over values of u.
     # This is the inner bit of equation 8 and the LHS of equation 9.
     inner_func[i,:] = (yfine - yfine[u_0_index[i]] - ((xfine-u_0[i])*sigma_b[i]))
+    inner_func2[i,:] = (yfine**2 - (((xfine-u_0[i])*sigma_b[i]) + yfine[u_0_index[i]])**2)
 
     for n in xrange(len(xfine)):
         if (n < (u_0_index[i]+5)):
@@ -141,22 +145,38 @@ for i in xrange(len(sigma_b)):
 
 
 plt.figure(4)
-plt.plot(xfine,yderfine,'--',u_0,sigma_b,'o',array([xfine[sigma_p_index]]),array([sigma_p]),'x')
+plt.plot(xfine,yderfine,'--',u_0,sigma_b,'o',u_max,sigma_b,'+',array([xfine[sigma_p_index]]),array([sigma_p]),'x')
 plt.title('Derivative of potential')
 plt.ylabel('dU/du')
 plt.xlabel('u')
-
 # Calculate kink pair formation v's stress and report
 
 H_kp = zeros(sigma_b.shape, dtype=sigma_b.dtype)
+Un = zeros(sigma_b.shape, dtype=sigma_b.dtype)
 for i in xrange(len(sigma_b)):
     H_kp[i] = 2.0 * sqrt(2.0*Sd) * \
                 (num_integ(    \
                   xfine[(u_0_index[i]):u_max_index[i]], \
                   sqrt(inner_func[i,(u_0_index[i]):u_max_index[i]]))[-1])
-print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol)"
+
+    Un[i] = 2.0 * (num_integ(xfine[(u_0_index[i]):u_max_index[i]], \
+                  sqrt(inner_func2[i,(u_0_index[i]):u_max_index[i]]))[-1])
+
+print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
 for i in xrange(len(sigma_b)):
-    print "% .3g    % .3g      % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000))
+    print "% .3g    % .3g      % .3g    % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
+
+plt.figure(6)
+plt.plot((sigma_b/5.0E-10),(Un*Na/1000),'--')
+plt.title('Critical stress / kink energy')
+plt.xlabel('Tau* - Pa')
+plt.ylabel('Un - kJ/mol')
+
+plt.figure(7)
+plt.plot((sigma_b/sigma_p),(Un/(kink_energy2*2.0)),'--',(sigma_b/sigma_p),(Un/(kink_energy2*2.0)),'o')
+plt.title('Critical stress / kink energy')
+plt.xlabel('Tau*/sigma_p')
+plt.ylabel('Un/2Uk')
 
 # Calculate shape of kink pair - this looks odd? 
 
