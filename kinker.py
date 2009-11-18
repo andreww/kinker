@@ -140,7 +140,7 @@ for i in xrange(len(sigma_b)):
             break
 
 
-plt.figure(3)
+plt.figure(4)
 plt.plot(xfine,yderfine,'--',u_0,sigma_b,'o',array([xfine[sigma_p_index]]),array([sigma_p]),'x')
 plt.title('Derivative of potential')
 plt.ylabel('dU/du')
@@ -167,7 +167,7 @@ for i in xrange(len(sigma_b)):
                  (1.0/(sqrt(yfine[(u_0_index[i]+1):u_max_index[i]]-yfine[u_0_index[i]]))))))
 
 
-plt.figure(4)
+plt.figure(5)
 for i in xrange(len(sigma_b)):
     plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
    # plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(5.0-zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
