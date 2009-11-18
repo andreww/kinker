@@ -91,6 +91,11 @@ kink_energy = sqrt(2.0*Sd) * (num_integ(xfine,sqrt(yfine-yfine[0])))[-1]
 print "Energy of a geometrical kink = %10.10g J " % kink_energy 
 print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy * Na)/1000)
 
+# Calculate kink energy according to Dorn & Rajnak 
+kink_energy2 = yfine[0] * (num_integ(xfine,sqrt(((yfine/yfine[0])**2) - 1  )))[-1] 
+print "Energy of a geometrical kink (2) = %10.10g J " % kink_energy2
+print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy2 * Na)/1000)
+
 plt.figure(3)
 plt.plot(xfine[1:],zdiff,'-')
 plt.ylabel('z-z0')
