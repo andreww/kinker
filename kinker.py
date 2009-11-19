@@ -2,7 +2,8 @@
 
 from numpy import *
 import matplotlib.pyplot as plt
-from scipy import interpolate, integrate
+from scipy import interpolate
+from peierls import kp_energy, num_integ
 
 def load_data (filename):
     """Load data from filename, if None load example data."""
@@ -18,15 +19,6 @@ def load_data (filename):
     x,y = loadtxt(FILE, unpack=True)
     FILE.close()
     return(x,y)
-
-def num_integ(inx,iny):
-    """Given values of a function (iny) evaluated at points (inx), 
-       calculate integral of function at points using trapezium rule"""
-    inx = atleast_1d(inx)
-    out = zeros(inx.shape, dtype=inx.dtype)
-    for n in xrange(len(out)):
-        out[n] = integrate.trapz(iny[0:n],inx[0:n])
-    return out
 
 
 basename = raw_input("Basename (input is basname.dat): ")
@@ -103,45 +95,12 @@ plt.xlabel('u')
 plt.title('Geometrical kink shape')
 
 
-# Lower limits (u_0) come from eq.4:
-
 sigma_b = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.2*sigma_p, 0.25*sigma_p, \
                  0.3*sigma_p, 0.4*sigma_p, \
                  0.5*sigma_p, 0.6*sigma_p, 0.7*sigma_p, \
                  0.75*sigma_p, 0.8*sigma_p,  0.9*sigma_p, 0.99*sigma_p, 0.999*sigma_p])
-u_0 = zeros(sigma_b.shape, dtype=sigma_b.dtype)
-u_0_index = zeros(sigma_b.shape, dtype=integer) # What index do we want to start from?
-for i in xrange(len(sigma_b)):
-    for n in xrange(len(xfine)):
-        if (yderfine[n] > sigma_b[i]):
-            u_0[i] = xfine[n]
-            u_0_index[i] = n
-            break
 
-# Upper limits (u_max) come from eq.9: this is a brute force search.
-
-u_max = zeros(sigma_b.shape, dtype=sigma_b.dtype)
-u_max_index = zeros(sigma_b.shape, dtype=integer)
-U_u_max = zeros(sigma_b.shape, dtype=sigma_b.dtype)
-inner_func = zeros((len(sigma_b),len(xfine)))
-inner_func2 = zeros((len(sigma_b),len(xfine)))
-
-for i in xrange(len(sigma_b)):
-    # Build an array inner_func = U(u) - U(u0) - (u - u_0)b_sigma
-    # First index over values of b_sigma and second over values of u.
-    # This is the inner bit of equation 8 and the LHS of equation 9.
-    inner_func[i,:] = (yfine - yfine[u_0_index[i]] - ((xfine-u_0[i])*sigma_b[i]))
-    inner_func2[i,:] = (yfine**2 - (((xfine-u_0[i])*sigma_b[i]) + yfine[u_0_index[i]])**2)
-
-    for n in xrange(len(xfine)):
-        if (n < (u_0_index[i]+5)):
-            continue # u_max must be after u_0 and sometimes these seems to be a numerical
-                     # issue so make it at least 5 spaces after u_0
-        if (inner_func[i,n] < 0.0):
-            u_max[i] = xfine[n]
-            u_max_index[i] = n
-            U_u_max[i] = yfine[n]
-            break
+(u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, sigma_b)
 
 
 plt.figure(4)
@@ -149,18 +108,7 @@ plt.plot(xfine,yderfine,'--',u_0,sigma_b,'o',u_max,sigma_b,'+',array([xfine[sigm
 plt.title('Derivative of potential')
 plt.ylabel('dU/du')
 plt.xlabel('u')
-# Calculate kink pair formation v's stress and report
 
-H_kp = zeros(sigma_b.shape, dtype=sigma_b.dtype)
-Un = zeros(sigma_b.shape, dtype=sigma_b.dtype)
-for i in xrange(len(sigma_b)):
-    H_kp[i] = 2.0 * sqrt(2.0*Sd) * \
-                (num_integ(    \
-                  xfine[(u_0_index[i]):u_max_index[i]], \
-                  sqrt(inner_func[i,(u_0_index[i]):u_max_index[i]]))[-1])
-
-    Un[i] = 2.0 * (num_integ(xfine[(u_0_index[i]):u_max_index[i]], \
-                  sqrt(inner_func2[i,(u_0_index[i]):u_max_index[i]]))[-1])
 
 print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
 for i in xrange(len(sigma_b)):
@@ -178,20 +126,11 @@ plt.title('Critical stress / kink energy')
 plt.xlabel('Tau*/sigma_p')
 plt.ylabel('Un/2Uk')
 
-# Calculate shape of kink pair - this looks odd? 
-
-zdiff_kp = zeros((len(sigma_b),len(xfine)))
-for i in xrange(len(sigma_b)):
-    zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]] = (sqrt(Sd/2.0) * \
-                 (num_integ(xfine[(u_0_index[i]+1):u_max_index[i]], \
-                 (1.0/(sqrt(yfine[(u_0_index[i]+1):u_max_index[i]]-yfine[u_0_index[i]]))))))
-
-
-plt.figure(5)
-for i in xrange(len(sigma_b)):
-    plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
-   # plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(5.0-zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
-plt.xlabel('u')
-plt.ylabel('z-z0')
-plt.title('Kinki-pair shape')
+###plt.figure(5)
+###for i in xrange(len(sigma_b)):
+###    plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
+###   # plt.plot(xfine[(u_0_index[i]+1):u_max_index[i]],(5.0-zdiff_kp[i,(u_0_index[i]+1):u_max_index[i]]),'-')
+###plt.xlabel('u')
+###plt.ylabel('z-z0')
+###plt.title('Kinki-pair shape')
 plt.show()
