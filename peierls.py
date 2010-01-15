@@ -74,8 +74,8 @@ def kp_energy (xfine, yfine, yderfine, sigma_b):
     for i in xrange(len(sigma_b)):
         H_kp[i] = 2.0 * sqrt(2.0*Sd) * \
                     (num_integ(    \
-                      xfine[(u_0_index[i]):u_max_index[i]], \
-                      sqrt(inner_func[i,(u_0_index[i]):u_max_index[i]]))[-1])
+                     xfine[(u_0_index[i]):u_max_index[i]], \
+                     sqrt(inner_func[i,(u_0_index[i]):u_max_index[i]]))[-1])
     
         Un[i] = 2.0 * (num_integ(xfine[(u_0_index[i]):u_max_index[i]], \
                       sqrt(inner_func2[i,(u_0_index[i]):u_max_index[i]]))[-1])
@@ -91,3 +91,44 @@ def kp_energy (xfine, yfine, yderfine, sigma_b):
 
     return(u_0, u_max, H_kp, Un, zdiff_kp)
 
+def get_u_max_from_h(x, h, u0, u_0_index):
+    """Given a Peiels potential x, a kink height
+    h, and a initial displacment u_0 calculate
+    the index of the kink heigh u_max_index and 
+    the actual position of the kink u_max. For
+    e.q. 3 of Carrez 2009"""
+
+    for i in xrange(len(x)):
+        if (x[i] < u_0_index):
+            continue
+        if (x[i] > u_0+h):
+            u_max = u_0 + h
+            u_max_index = i
+            break
+
+    return(u_max, u_max_index)
+ 
+
+
+def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers):
+
+
+    (u_0, u_0_index) = get_u0(x, yderv, stress)
+    (u_max, u_max_index) = get_u_max_from_h(x, h)
+
+    Epeierls = 2 * num_integ(x[u_0_index+1:u_max_index], y[u_0_index+1:u_max_index]) + \
+               w * (y[u_max_index] - y[u_0_index])
+
+    # screw dislocation with edge kinks. 
+    Eelas = (shear_mod * burgers**2) / ( 2 * pi) * \
+            (sqrt(w**2+h**2)-w-h+(w*log((2*w)/(w+sqrt(w**2+h**2)))) - \
+            (1/(1-poss))*(w-sqrt(w**2+h**2)+h*log((h+sqrt(w**2+h**2))/w) - \
+             h*log(h/exp(roh))))
+
+    Ework = stress * burgers * h * w
+
+    Etot = Eelas + Epeierls + Ework
+
+    return (Etot)
+
+    
