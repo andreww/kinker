@@ -33,12 +33,17 @@ else:
 #(x,y) = load_data(None) # For test data
 (x,y) = load_data(filename)
 
+#we need to know the maximum position of the x axis, which we take as the 
+# periodicity of the potential 
+x_max = max(x)
+print "From the data it looks like x' is %5g m" % x_max
+
 Na = 6.022E23 # Avagadro's number
 
 # Fit to cubic spline - avoid having xfine = 0 as this gives 
 # NaN when doing 1/sqrt(y) also because close to the origin we 
 # can have yfine[1] < yfine[0] (for example)
-xfine = arange(0.025E-10,4.975E-10,0.001E-10)
+xfine = arange(0.025E-10,(x_max - 0.025E-10),0.001E-10)
 tck = interpolate.splrep(x,y,s=0)
 yfine = interpolate.splev(xfine,tck,der=0)
 
