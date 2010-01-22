@@ -33,6 +33,10 @@ else:
 #(x,y) = load_data(None) # For test data
 (x,y) = load_data(filename)
 
+# For PN data we'll need to add the elastic energy of the dislocation.
+# Approximatly: 1/2Gb^2
+# y = y + (0.5 * 160.0E9 * x_max**2.0)
+
 #we need to know the maximum position of the x axis, which we take as the 
 # periodicity of the potential 
 x_max = max(x)
