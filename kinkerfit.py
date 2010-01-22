@@ -2,8 +2,9 @@
 
 from numpy import *
 import matplotlib.pyplot as plt
-from scipy import interpolate
+from scipy import interpolate, optimize
 from peierls import kp_energy, num_integ, kinker
+import time as time
 
 def load_data (filename):
     """Load data from filename, if None load example data."""
@@ -21,15 +22,19 @@ def load_data (filename):
     return(x,y)
 
 
-def errorfunc(p, x, y):
+def errfunc(p, x, y):
     # Assume we have loads of cal data so we can
     # intepolate it to find values equiv to the 
     # experimental points (using numpys numpy.interp)
-    ## FIXME - I'm stuck at the mo
+    
     (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
-     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y)
-    interp_calc_y = interp(x, , calc_y)
-    error = (expt_y - interp_calc_y)
+     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,p, G=60E9,silent=True )
+
+    calc_x = (sigma_b/sigma_p)
+    calc_y = (Un/(kink_energy2*2.0))
+    interp_calc_y = interp(T_n,calc_x,calc_y)
+    error = (tau_n - interp_calc_y)
+    print kink_energy2, sigma_p, sum((error*error)), (time.time() - t0), p
     return error
 
 basename = raw_input("Basename (input is basname.dat): ")
@@ -47,21 +52,25 @@ Na = 6.022E23 # Avagadro's number
 
 # Initial solution with out opt.
 (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
- zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y)
+ zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y,G=60E9)
 
-FILE = open('MgO_experiments.dat', 'r')
+FILE = open('MgO_experiments_trim.dat', 'r')
 expt_T,expt_tau = loadtxt(FILE, unpack=True)
 FILE.close()
 
-T_n = T/500.0
+T_n = expt_T/500.0
 # Don't know why I need to / 5000
 # but 9.0 is tau at Tcrit (removes background
 # from this dataset).
-tau_n = (tau-9.0)/5000
+tau_n = (expt_tau-9.0)/5000
 
-opt_y, sucess = optimize.leastsq(errfunc, x, args=(x, y))
+print "Optimizing potential..."
+print "Kink energy, sigma_p, sumsq, time"
+t0 = time.time()
+opt_y, sucess = optimize.leastsq(errfunc, y, args=(x, y))
 
-
+print opt_y
+print sucess
 
 
 # Plot data 

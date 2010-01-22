@@ -134,7 +134,7 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
     
 
 
-def kinker (x, y, G=None, b=None):
+def kinker (x, y, G=None, b=None, silent=False):
     """Solve the line tension model for a set of points 
        describing the Peiels potential. Input is:
        x: list of displacments from 0 to b
@@ -154,7 +154,8 @@ def kinker (x, y, G=None, b=None):
     #we need to know the maximum position of the x axis, which we take as the 
     # periodicity of the potential 
     x_max = max(x)
-    print "From the data it looks like x max' is %5g m" % x_max
+    if not silent:
+        print "From the data it looks like x max' is %5g m" % x_max
     if b is None:
         b = x_max
 
@@ -173,17 +174,20 @@ def kinker (x, y, G=None, b=None):
 
     # Calculate Sd...
     Sd = average(yfine) 
-    print "Sd has a value of %10.10g Jm-1" % Sd
+    if not silent:
+        print "Sd has a value of %10.10g Jm-1" % Sd
 
     # Calculate derivative 
     yderfine = interpolate.splev(xfine,tck,der=1)
     sigma_p_index = argmax(yderfine)
     sigma_p = yderfine[sigma_p_index]
-    print "Sigma_p has a value of %5g Pa " % (sigma_p / 5.0E-10)
+    if not silent:
+        print "Sigma_p has a value of %5g Pa " % (sigma_p / 5.0E-10)
 
     w_k = 5.0E-10 * sqrt(Sd/(2.0*(yfine[argmax(yfine)]-yfine[0])))
 
-    print "w_k has a calculated value of %5g m " % w_k
+    if not silent:
+        print "w_k has a calculated value of %5g m " % w_k
 
     # Calculate 1/sqrt(U) and plot
     invsqrt_yfine = 1.0/(sqrt(yfine-yfine[0]))
@@ -195,13 +199,15 @@ def kinker (x, y, G=None, b=None):
     zdiff = zeros(xfine.shape, dtype=xfine.dtype)
     zdiff = sqrt(Sd/2.0) * num_integ(xfine[1:],(1.0/(sqrt(yfine[1:]-yfine[0])))) 
     kink_energy = sqrt(2.0*Sd) * (num_integ(xfine,sqrt(yfine-yfine[0])))[-1] 
-    print "Energy of a geometrical kink = %10.10g J " % kink_energy 
-    print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy * Na)/1000)
+    if not silent:
+        print "Energy of a geometrical kink = %10.10g J " % kink_energy 
+        print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy * Na)/1000)
 
     # Calculate kink energy according to Dorn & Rajnak 
     kink_energy2 = yfine[0] * (num_integ(xfine,sqrt(((yfine/yfine[0])**2) - 1  )))[-1] 
-    print "Energy of a geometrical kink (2) = %10.10g J " % kink_energy2
-    print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy2 * Na)/1000)
+    if not silent:
+        print "Energy of a geometrical kink (2) = %10.10g J " % kink_energy2
+        print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy2 * Na)/1000)
 
     sigma_b = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.2*sigma_p, 0.25*sigma_p, \
               0.3*sigma_p, 0.4*sigma_p, \
@@ -211,8 +217,9 @@ def kinker (x, y, G=None, b=None):
     (u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, sigma_b)
 
 
-    print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
-    for i in xrange(len(sigma_b)):
-        print "% .3g    % .3g      % .3g    % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
+    if not silent:
+        print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
+        for i in xrange(len(sigma_b)):
+            print "% .3g    % .3g      % .3g    % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
 
     return (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2)
