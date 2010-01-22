@@ -132,3 +132,87 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
     return (Etot)
 
     
+
+
+def kinker (x, y, G=None, b=None):
+    """Solve the line tension model for a set of points 
+       describing the Peiels potential. Input is:
+       x: list of displacments from 0 to b
+       y: list of energies.
+       G: optional bulk modulous to estimate elastic
+          contribution to energy.
+       b: optional value of Burgers vector (otherwise assume max(x)
+       Output is:
+       xfine: interpolation over x
+       yfine: interpolation over y
+       sigma_p: The Peiels stress
+       zdiff: shape of geometrical kink (one point per xfine)
+       """
+
+    Na = 6.022E23 # Avagadro's number
+
+    #we need to know the maximum position of the x axis, which we take as the 
+    # periodicity of the potential 
+    x_max = max(x)
+    print "From the data it looks like x max' is %5g m" % x_max
+    if b is None:
+        b = x_max
+
+    # For PN data we'll need to add the elastic energy of the dislocation.
+    # Approximatly: 1/2Gb^2
+    # FIXME: caller should do this!
+    if G != None:
+        y = y + (0.5 * 160.0E9 * x_max**2.0)
+
+    # Fit to cubic spline - avoid having xfine = 0 as this gives 
+    # NaN when doing 1/sqrt(y) also because close to the origin we 
+    # can have yfine[1] < yfine[0] (for example)
+    xfine = arange(0.025E-10,(x_max - 0.025E-10),0.001E-10)
+    tck = interpolate.splrep(x,y,s=0)
+    yfine = interpolate.splev(xfine,tck,der=0)
+
+    # Calculate Sd...
+    Sd = average(yfine) 
+    print "Sd has a value of %10.10g Jm-1" % Sd
+
+    # Calculate derivative 
+    yderfine = interpolate.splev(xfine,tck,der=1)
+    sigma_p_index = argmax(yderfine)
+    sigma_p = yderfine[sigma_p_index]
+    print "Sigma_p has a value of %5g Pa " % (sigma_p / 5.0E-10)
+
+    w_k = 5.0E-10 * sqrt(Sd/(2.0*(yfine[argmax(yfine)]-yfine[0])))
+
+    print "w_k has a calculated value of %5g m " % w_k
+
+    # Calculate 1/sqrt(U) and plot
+    invsqrt_yfine = 1.0/(sqrt(yfine-yfine[0]))
+    invsqrt_y = 1.0/(sqrt(y-y[0]))
+
+    # Calculate single kink shape - equation 5 
+    # of Seeger 1981. Note that U(0) = 0. (no applied stress)
+
+    zdiff = zeros(xfine.shape, dtype=xfine.dtype)
+    zdiff = sqrt(Sd/2.0) * num_integ(xfine[1:],(1.0/(sqrt(yfine[1:]-yfine[0])))) 
+    kink_energy = sqrt(2.0*Sd) * (num_integ(xfine,sqrt(yfine-yfine[0])))[-1] 
+    print "Energy of a geometrical kink = %10.10g J " % kink_energy 
+    print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy * Na)/1000)
+
+    # Calculate kink energy according to Dorn & Rajnak 
+    kink_energy2 = yfine[0] * (num_integ(xfine,sqrt(((yfine/yfine[0])**2) - 1  )))[-1] 
+    print "Energy of a geometrical kink (2) = %10.10g J " % kink_energy2
+    print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy2 * Na)/1000)
+
+    sigma_b = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.2*sigma_p, 0.25*sigma_p, \
+              0.3*sigma_p, 0.4*sigma_p, \
+              0.5*sigma_p, 0.6*sigma_p, 0.7*sigma_p, \
+              0.75*sigma_p, 0.8*sigma_p,  0.9*sigma_p, 0.99*sigma_p, 0.999*sigma_p])
+
+    (u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, sigma_b)
+
+
+    print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
+    for i in xrange(len(sigma_b)):
+        print "% .3g    % .3g      % .3g    % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
+
+    return (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2)
