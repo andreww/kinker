@@ -37,6 +37,10 @@ def errfunc(p, x, y):
     print kink_energy2, sigma_p, sum((error*error)), (time.time() - t0), p
     return error
 
+Na = 6.022E23 # Avagadro's number
+
+# Load data set, x is the displacment (u) and y is the energy (U)
+#(x,y) = load_data(None) # For test data
 basename = raw_input("Basename (input is basname.dat): ")
 if (basename == ""):
     basename = 'example'
@@ -44,19 +48,16 @@ if (basename == ""):
 else:
     filename = basename + '.dat'
 
-Na = 6.022E23 # Avagadro's number
-
-# Load data set, x is the displacment (u) and y is the energy (U)
-#(x,y) = load_data(None) # For test data
 (x,y) = load_data(filename)
+
+# Load experimental data
+exptdata = raw_input("Expt data (input is basname.dat): ")
+(expt_T,expt_tau) = load_data(exptdata)
 
 # Initial solution with out opt.
 (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
  zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y,G=60E9)
 
-FILE = open('MgO_experiments_trim.dat', 'r')
-expt_T,expt_tau = loadtxt(FILE, unpack=True)
-FILE.close()
 
 T_n = expt_T/500.0
 # Don't know why I need to / 5000
