@@ -2,6 +2,7 @@
 
 from numpy import *
 from scipy import interpolate, integrate
+import peierls_pot as pot
 
 def num_integ(inx,iny):
     """Given values of a function (iny) evaluated at points (inx), 
@@ -134,7 +135,7 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
     
 
 
-def kinker (x, y, G=None, b=None, silent=False):
+def kinker (x, y, G=None, b=None, silent=False, method=None, params=None):
     """Solve the line tension model for a set of points 
        describing the Peiels potential. Input is:
        x: list of displacments from 0 to b
@@ -159,26 +160,33 @@ def kinker (x, y, G=None, b=None, silent=False):
     if b is None:
         b = x_max
 
-    # For PN data we'll need to add the elastic energy of the dislocation.
-    # Approximatly: 1/2Gb^2
-    # FIXME: caller should do this!
-    if G != None:
-        y = y + (0.5 * 160.0E9 * x_max**2.0)
-
     # Fit to cubic spline - avoid having xfine = 0 as this gives 
     # NaN when doing 1/sqrt(y) also because close to the origin we 
     # can have yfine[1] < yfine[0] (for example)
     xfine = arange(0.025E-10,(x_max - 0.025E-10),0.001E-10)
-    tck = interpolate.splrep(x,y,s=0)
-    yfine = interpolate.splev(xfine,tck,der=0)
+    if method is None:
+        tck = interpolate.splrep(x,y,s=0)
+        yfine = interpolate.splev(xfine,tck,der=0)
+        # Calculate derivative 
+        yderfine = interpolate.splev(xfine,tck,der=1)
+    elif method == 'func':
+        # Probably should pass in the func, which would be better and could
+        # generalize to interp too?
+        yfine = pot.pot_func(xfine,params,x_max)
+        # Calculate derivative 
+        yderfine = pot.pot_num_deriv(xfine,params,x_max,(0.025E-10/10))
+
+    # For PN data we'll need to add the elastic energy of the dislocation.
+    # Approximatly: 1/2Gb^2
+    # FIXME: caller should do this!
+    if G != None:
+        yfine = yfine + (0.5 * 160.0E9 * x_max**2.0)
 
     # Calculate Sd...
     Sd = average(yfine) 
     if not silent:
         print "Sd has a value of %10.10g Jm-1" % Sd
 
-    # Calculate derivative 
-    yderfine = interpolate.splev(xfine,tck,der=1)
     sigma_p_index = argmax(yderfine)
     sigma_p = yderfine[sigma_p_index]
     if not silent:
