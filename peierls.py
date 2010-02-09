@@ -188,11 +188,11 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None):
         print "Sd has a value of %10.10g Jm-1" % Sd
 
     sigma_p_index = argmax(yderfine)
-    sigma_p = yderfine[sigma_p_index]
+    sigma_p = yderfine[sigma_p_index] / x_max
     if not silent:
-        print "Sigma_p has a value of %5g Pa " % (sigma_p / 5.0E-10)
+        print "Sigma_p has a value of %5g Pa " % sigma_p
 
-    w_k = 5.0E-10 * sqrt(Sd/(2.0*(yfine[argmax(yfine)]-yfine[0])))
+    w_k = x_max * sqrt(Sd/(2.0*(yfine[argmax(yfine)]-yfine[0])))
 
     if not silent:
         print "w_k has a calculated value of %5g m " % w_k
@@ -222,7 +222,7 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None):
               0.5*sigma_p, 0.6*sigma_p, 0.7*sigma_p, \
               0.75*sigma_p, 0.8*sigma_p,  0.9*sigma_p, 0.99*sigma_p, 0.999*sigma_p])
 
-    (u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, sigma_b)
+    (u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, (sigma_b*x_max))
 
 
     if not silent:
@@ -230,4 +230,4 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None):
         for i in xrange(len(sigma_b)):
             print "% .3g    % .3g      % .3g    % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
 
-    return (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2)
+    return (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, zdiff_kp, (yderfine/x_max), sigma_b, sigma_p_index, kink_energy2)

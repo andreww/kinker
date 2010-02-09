@@ -14,10 +14,10 @@ def errfunc(p, x, y):
     # experimental points (using numpys numpy.interp)
     
     (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
-     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, G=60E9,silent=True,method='func',params=p )
+     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, G=60E9,silent=False,method='func',params=p )
 
-    calc_x = (sigma_b/sigma_p)
-    calc_y = (Un/(kink_energy2*2.0))
+    calc_x = (Un/(kink_energy2*2.0))
+    calc_y = sigma_b
     interp_calc_y = interp(T_n,calc_x,calc_y)
     error = (tau_n - interp_calc_y)
     print "----------------------------------------"
@@ -76,12 +76,12 @@ tau_n = (expt_tau-9.0)/5000
 print "Optimizing potential..."
 print "Kink energy, sigma_p, sumsq, time"
 t0 = time.time()
-#full_opt_p, sucess = optimize.leastsq(errfunc, opt_p, args=(x, y))
+full_opt_p, sucess = optimize.leastsq(errfunc, opt_p, args=(x, y))
 
-full_opt_p = [  2.40000000e-10,   2.40000000e-10,  -1.15171225e-03,   1.69230101e-03, \
-                     1.38187764e-06,   2.00000000e+00,   3.00000000e+00,   5.70605907e-02, \
-                     8.88014468e+00,   2.03026690e+00]
-sucess = 10
+#full_opt_p = [  2.40000000e-10,   2.40000000e-10,  -1.15171225e-03,   1.69230101e-03, \
+#                     1.38187764e-06,   2.00000000e+00,   3.00000000e+00,   5.70605907e-02, \
+#                     8.88014468e+00,   2.03026690e+00]
+#sucess = 10
 
 print "Optimal parameter set and sucess variable:"
 print full_opt_p
