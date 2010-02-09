@@ -28,6 +28,12 @@ if (basename == ""):
 else:
     filename = basename + '.dat'
 
+xmax_input = raw_input("Provide a maximum value of x in m (empty string to use input file and 5.0E-10 for old results):")
+if (xmax_input == ""):
+    xmax_input = None
+else:
+    xmax_input = float(xmax_input)
+
 Na = 6.022E23 # Avagadro's number
 
 # Load data set, x is the displacment (u) and y is the energy (U)
@@ -35,7 +41,7 @@ Na = 6.022E23 # Avagadro's number
 (x,y) = load_data(filename)
 
 (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
- zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y)
+ zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, maxx=xmax_input)
 
 # Plot data 
 plt.figure(1)

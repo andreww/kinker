@@ -135,7 +135,7 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
     
 
 
-def kinker (x, y, G=None, b=None, silent=False, method=None, params=None):
+def kinker (x, y, G=None, b=None, silent=False, method=None, params=None, maxx=None):
     """Solve the line tension model for a set of points 
        describing the Peiels potential. Input is:
        x: list of displacments from 0 to b
@@ -152,13 +152,16 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None):
 
     Na = 6.022E23 # Avagadro's number
 
-    #we need to know the maximum position of the x axis, which we take as the 
-    # periodicity of the potential 
-    x_max = max(x)
-    if not silent:
-        print "From the data it looks like x max' is %5g m" % x_max
-    if b is None:
-        b = x_max
+    if maxx is None:
+        #we need to know the maximum position of the x axis, which we take as the 
+        # periodicity of the potential 
+        x_max = max(x)
+        if not silent:
+            print "From the data it looks like x max' is %5g m" % x_max
+        if b is None:
+            b = x_max
+    else:
+        x_max = maxx
 
     # Fit to cubic spline - avoid having xfine = 0 as this gives 
     # NaN when doing 1/sqrt(y) also because close to the origin we 
