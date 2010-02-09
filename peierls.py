@@ -190,6 +190,10 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None, maxx=N
     if not silent:
         print "Sd has a value of %10.10g Jm-1" % Sd
 
+    if not silent:
+        print "Maximum peierls pot is %5g Jm-1" % max(yfine)
+        print "Maximum peierls pot is %5g eV.Ang-1" % (max(yfine)*6.24150974E8)
+
     sigma_p_index = argmax(yderfine)
     sigma_p = yderfine[sigma_p_index] / x_max
     if not silent:
