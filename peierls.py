@@ -192,7 +192,12 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None, maxx=N
 
     if not silent:
         print "Maximum peierls pot is %5g Jm-1" % max(yfine)
-        print "Maximum peierls pot is %5g eV.Ang-1" % (max(yfine)*6.24150974E8)
+        print "Maximum peierls pot is %5g 10E-3 eV.Ang-1" % (max(yfine)*6.24150974E8/10E-3)
+        print "Minimum peierls pot is %5g Jm-1" % min(yfine)
+        print "Minimum peierls pot is %5g 10E-3 eV.Ang-1" % (min(yfine)*6.24150974E8/10E-3)
+        print "Vp (max - min) is %5g Jm-1" % (max(yfine)-min(yfine))
+        print "Vp (max - min) is %5g 10E-3 eV.Ang-1" % ((max(yfine)-min(yfine))*6.24150974E8/10E-3)
+
 
     sigma_p_index = argmax(yderfine)
     sigma_p = yderfine[sigma_p_index] / x_max
