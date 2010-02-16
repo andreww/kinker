@@ -229,17 +229,19 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None, maxx=N
         print "Energy of a geometrical kink (2) = %10.10g J " % kink_energy2
         print "Energy of a geometrical kink = %10.10g kJ/mol " % ((kink_energy2 * Na)/1000)
 
-    sigma_b = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.2*sigma_p, 0.25*sigma_p, \
+    sigma = array([0.001*sigma_p, 0.01*sigma_p, 0.1*sigma_p, 0.2*sigma_p, 0.25*sigma_p, \
               0.3*sigma_p, 0.4*sigma_p, \
               0.5*sigma_p, 0.6*sigma_p, 0.7*sigma_p, \
               0.75*sigma_p, 0.8*sigma_p,  0.9*sigma_p, 0.99*sigma_p, 0.999*sigma_p])
 
-    (u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, (sigma_b*x_max))
+    # kp energy takes sigma * burgers vector as input (c.f. seeger e.q. 9) but I think 
+    # this is actually the periodicty of the function and Seeger assumes a edge dislo.
+    (u_0, u_max, H_kp, Un, zdiff_kp) = kp_energy(xfine, yfine, yderfine, (sigma*x_max))
 
 
     if not silent:
-        print     "Sigma*b (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
-        for i in xrange(len(sigma_b)):
-            print "% .3g    % .3g      % .3g    % .3g    % .3g" % ((sigma_b[i]/5.0E-10), u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
+        print     "Sigma (Pa)     u_0 (m)        u_max (m)   H_kp (kJ/mol) Un"
+        for i in xrange(len(sigma)):
+            print "% .3g    % .3g      % .3g    % .3g    % .3g" % (sigma[i], u_0[i], u_max[i], (H_kp[i]*Na/1000), (Un[i]*Na/1000))
 
-    return (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, zdiff_kp, (yderfine/x_max), sigma_b, sigma_p_index, kink_energy2)
+    return (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, zdiff_kp, (yderfine/x_max), sigma, sigma_p_index, kink_energy2)
