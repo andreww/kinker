@@ -26,7 +26,7 @@ def pot_func(x, p,x_len):
     value = 0
     for i in range(len(a)):
         value=value + (a[i]**4)*sin((x/x_len)*pi/2.0) \
-                               *((sin((x/x_len)*pi))**b[i]) \
+                               *((sin((x/x_len)*pi))**(b[i]**2.0)) \
                                *cos((x/x_len)*pi/2.0)
     value = value + x0
     return value
