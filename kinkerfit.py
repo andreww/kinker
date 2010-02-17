@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from numpy import *
+import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate, optimize
 from peierls import kp_energy, num_integ, kinker
@@ -11,20 +12,49 @@ def errfunc(p, x, y):
     # Assume we have loads of cal data so we can
     # intepolate it to find values equiv to the 
     # experimental points (using numpys numpy.interp)
-    (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
-     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, G=60E9,silent=True,method='func',params=p )
 
-    calc_y = (Un/(kink_energy2*2.0))*500.0
-    calc_x = sigma_b 
-    interp_calc_y = interp(tau_n,calc_x,calc_y)
-    error = (T_n - interp_calc_y)
+    crit_stress = p[-1:]
+    crit_temp = p[-2:-1]
+
+    (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
+     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, G=60E9,silent=True,method='func',params=p[:-2] )
+
+    calc_y = (Un/(kink_energy2*2.0))*crit_temp
+    calc_x = sigma_b + crit_stress
+
+    if (np.all(np.diff(calc_y) > 0)): raise "Cannot interpolate on temp - array not ordered"
+    interp_calc_x = interp(T_n,calc_y,calc_x)
+    interp_calc_y = interp(interp_calc_x,calc_x,calc_y)
+
+
+    print calc_y 
+    print interp_calc_y
+    print T_n
+    print calc_x
+    print interp_calc_x
+
+    import sys
+
+    sys.exit()
+    i = 0
+    for temp in interp_calc_y:
+        if temp > crit_temp:
+            interp_calc_x[i] = crit_stress
+        i = i + 1    
+    error = (tau_n - interp_calc_x)
     print "----------------------------------------"
     print "kink energy (J)" 
     print  kink_energy2
     print "p stress (Pa)" 
     print  sigma_p
-    print "sum squares (K^2)"
+    print "Crit T (K)"
+    print crit_temp
+    print "Crit sigma (Pa)"
+    print crit_stress
+    print "sum squares (Pa^2)"
     print  sum((error*error))
+    print "max error (Pa)"
+    print max(error)
     print "time (s)" 
     print (time.time() - t0)
     print "----------------------------------------"
@@ -66,7 +96,13 @@ opt_p = pot.fit_pot(p0, x, y, x_len)
 exptdata = raw_input("Expt data (input is basname.dat): ")
 (T_n,expt_tau) = pot.load_data(exptdata)
 # Convert from MPa to Pa and subtract tau_crit (15 MPa, T_crit is 500 K, handled in error func.)
-tau_n = (expt_tau-15.0)*1E6
+tau_n = expt_tau*1E6
+
+# setup tau_crit and t_crit (15 MPa, T_crit is 500 K, handled in error func.)
+tau_crit = 10.0E6
+t_crit = 650
+opt_p = append(opt_p,t_crit)
+opt_p = append(opt_p,tau_crit)
 
 print "Optimizing potential..."
 t0 = time.time()
@@ -76,6 +112,10 @@ print "Optimal parameter set:"
 print full_opt_p
 print "sucess code:"
 print sucess
+
+tau_crit_opt = full_opt_p[-1:]
+t_crit_opt = full_opt_p[-2:-1]
+full_opt_p = full_opt_p[:-2]
 
 print "Solution to kink model with this paramerer set"
 (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
@@ -110,7 +150,7 @@ plt.xlabel('Tau* - Pa')
 plt.ylabel('Un - kJ/mol')
 
 plt.figure(5)
-plt.plot(sigma_b,((Un/(kink_energy2*2.0))*500),'--',(tau_n),T_n,'o',sigma_b_init,((Un_init/(kink_energy2_init*2.0))*500),'-')
+plt.plot((sigma_b+tau_crit_opt),((Un/(kink_energy2*2.0))*t_crit_opt),'--',(tau_n),T_n,'o',(sigma_b_init+tau_crit),((Un_init/(kink_energy2_init*2.0))*t_crit),'-')
 plt.legend(('fit to expt data', 'expt data', 'init model'))
 plt.title('Critical stress / kink energy')
 plt.xlabel('Tau* (MPa)')
