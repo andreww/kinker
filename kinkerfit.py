@@ -8,6 +8,7 @@ from peierls import kp_energy, num_integ, kinker
 import time as time
 import peierls_pot as pot
 
+
 def errfunc(p, x, y):
     # Assume we have loads of cal data so we can
     # intepolate it to find values equiv to the 
@@ -22,26 +23,30 @@ def errfunc(p, x, y):
     calc_y = (Un/(kink_energy2*2.0))*crit_temp
     calc_x = sigma_b + crit_stress
 
-    if (np.all(np.diff(calc_y) > 0)): raise "Cannot interpolate on temp - array not ordered"
-    interp_calc_x = interp(T_n,calc_y,calc_x)
-    interp_calc_y = interp(interp_calc_x,calc_x,calc_y)
+    # interpolate stresses at experimental data points. Note that we have to 
+    # do this backwards, as kinker returns solutions for increing stress, which
+    # is decresing temp, and numpy.interp only likes things to increse (we check 
+    # this condition). We don't have to do anything special about high T results
+    # as they get the low stress result (they are > max calc T) which is 0.1% of
+    # sigma_P (in kinker) and this is equal to crit_stress (see above). 
+    if (np.all(np.diff(calc_y[::-1]) <= 0)):
+        raise "Cannot intepolate on temperature"
+    interp_calc_x = interp(T_n[::-1],calc_y[::-1],calc_x[::-1])
+    interp_calc_x = interp_calc_x[::-1]
 
+    # This is useful for debugging - draws a graph to check the interp...
+    #interp_calc_y = T_n # Don't need this unless we are graphing.
+    #plt.figure(5)
+    #plt.plot(calc_y, calc_x, 'o', T_n, tau_n, '.', interp_calc_y, interp_calc_x, 'x')
+    #plt.legend(('fit to expt data', 'expt data', 'init model'))
+    #plt.title('Critical stress / kink energy')
+    #plt.xlabel('Tau* (MPa)')
+    #plt.ylabel('Un/2Uk*T_crit (K)')
+    #plt.show()
 
-    print calc_y 
-    print interp_calc_y
-    print T_n
-    print calc_x
-    print interp_calc_x
+    # Calculate error in stress.
+    error = (tau_n-interp_calc_x)
 
-    import sys
-
-    sys.exit()
-    i = 0
-    for temp in interp_calc_y:
-        if temp > crit_temp:
-            interp_calc_x[i] = crit_stress
-        i = i + 1    
-    error = (tau_n - interp_calc_x)
     print "----------------------------------------"
     print "kink energy (J)" 
     print  kink_energy2
@@ -51,8 +56,8 @@ def errfunc(p, x, y):
     print crit_temp
     print "Crit sigma (Pa)"
     print crit_stress
-    print "sum squares (Pa^2)"
-    print  sum((error*error))
+    print "Gnorm (Pa)"
+    print  (sqrt(sum((error*error))))/len(error)
     print "max error (Pa)"
     print max(error)
     print "time (s)" 
