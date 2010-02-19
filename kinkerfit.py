@@ -31,8 +31,8 @@ def errfunc(p, x, y):
     # sigma_P (in kinker) and this is equal to crit_stress (see above). 
     if (np.all(np.diff(calc_y[::-1]) <= 0)):
         raise "Cannot intepolate on temperature"
-    interp_calc_x = interp(T_n[::-1],calc_y[::-1],calc_x[::-1])
-    interp_calc_x = interp_calc_x[::-1]
+    interp_calc_x = np.interp(T_n[::-1],calc_y[::-1],calc_x[::-1])
+    interp_calc_x = interp_calc_x[::-1] # Can we not do this in place above?
 
     # This is useful for debugging - draws a graph to check the interp...
     #interp_calc_y = T_n # Don't need this unless we are graphing.
@@ -128,7 +128,7 @@ print "Solution to kink model with this paramerer set"
 
 # Plot data 
 plt.figure(1)
-plt.plot(x,y,'o',x,pot.pot_func(x,opt_p, x_len),'-',x,pot.pot_func(x,full_opt_p, x_len),'--')
+plt.plot(x,y,'o',x,pot.pot_func(x,opt_p[:-2], x_len),'-',x,pot.pot_func(x,full_opt_p, x_len),'--')
 plt.legend(('Starting points', 'Fit to starting points', 'fit to expt data'))
 plt.ylabel('U (J/m)')
 plt.xlabel('u (m)')
@@ -160,5 +160,12 @@ plt.legend(('fit to expt data', 'expt data', 'init model'))
 plt.title('Critical stress / kink energy')
 plt.xlabel('Tau* (MPa)')
 plt.ylabel('Un/2Uk*T_crit (K)')
+
+plt.figure(6)
+plt.plot(((Un/(kink_energy2*2.0))*t_crit_opt),(sigma_b+tau_crit_opt),'--',T_n,tau_n,'o',((Un_init/(kink_energy2_init*2.0))*t_crit),(sigma_b_init+tau_crit),'-',)
+plt.legend(('fit to expt data', 'expt data', 'init model'))
+plt.title('Critical stress / kink energy')
+plt.ylabel('Tau* (MPa)')
+plt.xlabel('Un/2Uk*T_crit (K)')
 
 plt.show()
