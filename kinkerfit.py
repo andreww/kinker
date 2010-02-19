@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from numpy import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate, optimize
@@ -8,6 +7,7 @@ from peierls import kp_energy, num_integ, kinker
 import time as time
 import peierls_pot as pot
 
+Na = 6.022E23 # Avagadro's number - should have a module of converters for units.
 
 def errfunc(p, x, y):
     # Assume we have loads of cal data so we can
@@ -57,7 +57,7 @@ def errfunc(p, x, y):
     print "Crit sigma (Pa)"
     print crit_stress
     print "Gnorm (Pa)"
-    print  (sqrt(sum((error*error))))/len(error)
+    print (np.sqrt(sum((error*error))))/len(error)
     print "max error (Pa)"
     print max(error)
     print "time (s)" 
@@ -65,7 +65,6 @@ def errfunc(p, x, y):
     print "----------------------------------------"
     return error
 
-Na = 6.022E23 # Avagadro's number
 
 # Load data set, x is the displacment (u) and y is the energy (U)
 #(x,y) = load_data(None) # For test data
@@ -108,8 +107,8 @@ tau_n = expt_tau*1E6
 # setup tau_crit and t_crit (15 MPa, T_crit is 500 K, handled in error func.)
 tau_crit = 10.0E6
 t_crit = 650
-opt_p = append(opt_p,t_crit)
-opt_p = append(opt_p,tau_crit)
+opt_p = np.append(opt_p,t_crit)
+opt_p = np.append(opt_p,tau_crit)
 
 print "Optimizing potential..."
 t0 = time.time()
