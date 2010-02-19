@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from numpy import *
+import numpy as np
 
 def load_data (filename):
     """Load data from filename, if None load example data."""
@@ -13,38 +13,63 @@ def load_data (filename):
     else:
         FILE = open(filename,'r')
         print "Loading data from %s" % filename
-    x,y = loadtxt(FILE, unpack=True)
+    x,y = np.loadtxt(FILE, unpack=True)
     FILE.close()
     return(x,y)
 
+def choose_func():
+    i = 0
+    funcs = (_pot_func,_simp_func) 
+    for func in funcs:
+        print str(i) + ": " + func.__doc__
+        i = i + 1
+    i = int(raw_input("Choose a function: "))
+    return funcs[i]
 
-def pot_func(x, p,x_len):
+def _pot_func(x, p,x_len):
+    """Function of the form y = Sum{Ai*sin(x*pi/2)*sin^Bi(x/pi)*cos(x*pi/2)}"""
     N = (len(p)/2)
     a = p[0:N]
     b = p[N:2*N]
     x0 = 0.0
     value = 0
     for i in range(len(a)):
-        value=value + (a[i]**4)*sin((x/x_len)*pi/2.0) \
-                               *((sin((x/x_len)*pi))**(b[i]**2.0)) \
-                               *cos((x/x_len)*pi/2.0)
+        value=value + (a[i]**4)*np.sin((x/x_len)*np.pi/2.0) \
+                               *((np.sin((x/x_len)*np.pi))**(b[i]**2.0)) \
+                               *np.cos((x/x_len)*np.pi/2.0)
     value = value + x0
     return value
 
-def pot_num_deriv(x,p,x_len,delta_x):
+def _simp_func(x, p,x_len):
+    """Function of the form y = Sum{Ai*sin^Bi(x/pi)}"""
+    N = (len(p)/2)
+    a = p[0:N]
+    b = p[N:2*N]
+    x0 = 0.0
+    value = 0
+    for i in range(len(a)):
+        value=value + (a[i]**4)*((np.sin((x/x_len)*np.pi))**(b[i]**2.0)) \
+                               
+    value = value + x0
+    return value
+
+def eval_func(x, p, x_len, func):
+    return(func(x, p, x_len))
+
+def pot_num_deriv(x,p,x_len,delta_x, func):
     # Could do this analytically I think.
-    y_plus = pot_func((x+delta_x),p,x_len)
-    y_mins = pot_func((x-delta_x),p,x_len)
+    y_plus = func((x+delta_x),p,x_len)
+    y_mins = func((x-delta_x),p,x_len)
     dyBydx = (y_plus-y_mins)/(2.0*delta_x)
     return dyBydx
 
-def pot_error(p, x, y, x_len):
-    error = pot_func(x,p,x_len) - y
+def pot_error(p, x, y, x_len, func):
+    error = func(x,p,x_len) - y
     return error
 
-def fit_pot(p0, x, y, x_len):
+def fit_pot(p0, x, y, x_len, func):
     from scipy import optimize
-    opt_p, cov_x, infodict, mesg, s = optimize.leastsq(pot_error, p0, args=(x, y, x_len), full_output=1, maxfev=0)
+    opt_p, cov_x, infodict, mesg, s = optimize.leastsq(pot_error, p0, args=(x, y, x_len, func), full_output=1, maxfev=0)
     print mesg
     return opt_p
     
@@ -53,16 +78,19 @@ def fit_pot(p0, x, y, x_len):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     print "Testing the Peiels potential fitter..." 
+
+    func = choose_func()
+
     basename = raw_input("Basename for potetial input file (input file is basname.dat): ")
     filename = basename + '.dat'
     (x,y) = load_data(filename)
 
     p0 = [2.4E-10, 2.4E-10, 1, 2, 1, 2, 3, 4, 1, 2]
-    opt_p = fit_pot(p0, x, y, max(x))
+    opt_p = fit_pot(p0, x, y, max(x), func)
     
 
     print opt_p
-    opt_y = pot_func(x,opt_p,max(x))
+    opt_y = eval_func(x,opt_p,max(x), func)
     print opt_y
 
     plt.figure(1)

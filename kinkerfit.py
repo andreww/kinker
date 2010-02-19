@@ -18,7 +18,7 @@ def errfunc(p, x, y):
     crit_temp = p[-2:-1]
 
     (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
-     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, G=60E9,silent=True,method='func',params=p[:-2] )
+     zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y, G=60E9,silent=True,method=func,params=p[:-2] )
 
     calc_y = (Un/(kink_energy2*2.0))*crit_temp
     calc_x = sigma_b + crit_stress
@@ -84,18 +84,20 @@ print "Solving kink nucleation problem with inital potential using bspline inter
 (xfine_interp, yfine_interp, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
  zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y,G=60E9)
 
-# Now do it again using a sine function...
+# Now do it again using a function...
+
+func = pot.choose_func()
 
 # Fit this data to a sin function
 print "Fitting initial potential to sin function"
 #p0 = [2.4E-10, 2.4E-10, 1, 2, 1, 2, 3, 4, 1, 2]
 p0 = [2.4, 0.001, 0.001, 2.0, 2.0, 2.0]
-opt_p = pot.fit_pot(p0, x, y, x_len)
+opt_p = pot.fit_pot(p0, x, y, x_len, func)
 
 
 # Initial solution with this function
 (xfine_init, yfine, sigma_p, zdiff_init, u_0_init, u_max, H_kp, Un_init, \
- zdiff_kp, yderfine_init, sigma_b_init, sigma_p_index, kink_energy2_init) = kinker(x,y,G=60E9,method='func',params=opt_p)
+ zdiff_kp, yderfine_init, sigma_b_init, sigma_p_index, kink_energy2_init) = kinker(x,y,G=60E9,method=func,params=opt_p)
 
 # Load experimental data
 exptdata = raw_input("Expt data (input is basname.dat): ")
@@ -124,11 +126,11 @@ full_opt_p = full_opt_p[:-2]
 
 print "Solution to kink model with this paramerer set"
 (xfine, yfine, sigma_p, zdiff, u_0, u_max, H_kp, Un, \
- zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y,G=60E9,method='func',params=full_opt_p)
+ zdiff_kp, yderfine, sigma_b, sigma_p_index, kink_energy2) = kinker(x,y,G=60E9,method=func,params=full_opt_p)
 
 # Plot data 
 plt.figure(1)
-plt.plot(x,y,'o',x,pot.pot_func(x,opt_p[:-2], x_len),'-',x,pot.pot_func(x,full_opt_p, x_len),'--')
+plt.plot(x,y,'o',x,func(x,opt_p[:-2], x_len),'-',x,func(x,full_opt_p, x_len),'--')
 plt.legend(('Starting points', 'Fit to starting points', 'fit to expt data'))
 plt.ylabel('U (J/m)')
 plt.xlabel('u (m)')

@@ -172,12 +172,12 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None, maxx=N
         yfine = interpolate.splev(xfine,tck,der=0)
         # Calculate derivative 
         yderfine = interpolate.splev(xfine,tck,der=1)
-    elif method == 'func':
+    else:
         # Probably should pass in the func, which would be better and could
         # generalize to interp too?
-        yfine = pot.pot_func(xfine,params,x_max)
+        yfine = pot.eval_func(xfine,params,x_max,method)
         # Calculate derivative 
-        yderfine = pot.pot_num_deriv(xfine,params,x_max,(0.025E-10/10))
+        yderfine = pot.pot_num_deriv(xfine,params,x_max,(0.025E-10/10),method)
 
     # For PN data we'll need to add the elastic energy of the dislocation.
     # Approximatly: 1/2Gb^2
