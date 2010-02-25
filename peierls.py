@@ -92,20 +92,24 @@ def kp_energy (xfine, yfine, yderfine, sigma_b):
 
     return(u_0, u_max, H_kp, Un, zdiff_kp)
 
-def get_u_max_from_h(x, h, u0, u_0_index):
+def get_u_max_from_h(x, h, u_0, u_0_index):
     """Given a Peiels potential x, a kink height
     h, and a initial displacment u_0 calculate
     the index of the kink heigh u_max_index and 
     the actual position of the kink u_max. For
     e.q. 3 of Carrez 2009"""
 
-    for i in xrange(len(x)):
-        if (x[i] < u_0_index):
-            continue
-        if (x[i] > u_0+h):
-            u_max = u_0 + h
-            u_max_index = i
-            break
+    u_max = zeros((len(u_0),len(h)), dtype=u_0.dtype)
+    u_max_index = zeros((len(u_0),len(h)), dtype=integer)
+    for j in xrange(len(u_0)):
+        for k in xrange(len(h)):
+            for i in xrange(len(x)):
+                if (x[i] < u_0_index[j]):
+                    continue
+                if (x[i] > u_0[j]+h[k]):
+                    u_max[j,k] = u_0[j] + h[k]
+                    u_max_index[j,k] = i
+                    break
 
     return(u_max, u_max_index)
  
@@ -115,22 +119,41 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
 
 
     (u_0, u_0_index) = get_u0(x, yderv, stress)
-    (u_max, u_max_index) = get_u_max_from_h(x, h)
+    (u_max, u_max_index) = get_u_max_from_h(x, h, u_0, u_0_index)
 
-    Epeierls = 2 * num_integ(x[u_0_index+1:u_max_index], y[u_0_index+1:u_max_index]) + \
-               w * (y[u_max_index] - y[u_0_index])
-
+    Epeierls = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
+    for i in xrange(len(stress)):
+        for j in xrange(len(h)):
+            for k in xrange(len(w)):
+                Epeierls[i,j,k] = 2 * num_integ(x[u_0_index[i]+1:u_max_index[i,j]], y[u_0_index[i]+1:u_max_index[i,j]])[-1] + \
+                                    w[k] * (y[u_max_index[i,j]] - y[u_0_index[i]])
+    
     # screw dislocation with edge kinks. 
-    Eelas = (shear_mod * burgers**2) / ( 2 * pi) * \
-            (sqrt(w**2+h**2)-w-h+(w*log((2*w)/(w+sqrt(w**2+h**2)))) - \
-            (1/(1-poss))*(w-sqrt(w**2+h**2)+h*log((h+sqrt(w**2+h**2))/w) - \
-             h*log(h/exp(roh))))
+    # EQ. 4 of Carrez et al. 09
+    Eelas = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
+    for j in xrange(len(h)):
+        for k in xrange(len(w)):
+            Eelas[:,j,k] = (shear_mod * burgers**2) / ( 2.0 * pi) * \
+                ( sqrt(w[k]**2+h[j]**2)-w[k]-h[j] \
+                  + (w[k]*log((2.0*w[k])/(w[k]+sqrt(w[k]**2+h[j]**2)))) \
+                  - ((1.0/(1.0-poss))*(w[k]-sqrt(w[k]**2+h[j]**2)+h[j]*log((h[j]+sqrt(w[k]**2+h[j]**2))/w[k]) - \
+                 h[j]*log(h[j]/(roh*e)))) ) # NB - e is 2.71... from numpy. (not exp(roh) !!)
 
-    Ework = stress * burgers * h * w
+    Ework = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
+    for i in xrange(len(stress)):
+        for j in xrange(len(h)):
+            for k in xrange(len(w)):
+                Ework[i,j,k] = stress[i] * burgers * h[j] * w[k]
 
-    Etot = Eelas + Epeierls + Ework
-
-    return (Etot)
+    #Eelas = Eelas / 800
+    #Eelas = 0.0
+    Etot = Eelas + Epeierls - Ework
+    Na = 6.022E23 # Avagadro's number
+    Etot = ((Etot * Na)/1000) / 96
+    Eelas = ((Eelas * Na)/1000) / 96
+    Epeierls = ((Epeierls * Na) / 1000) / 96
+    Ework = ((Ework * Na) / 1000) / 96
+    return (Etot, Eelas, Epeierls, Ework)
 
     
 
