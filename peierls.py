@@ -14,6 +14,17 @@ def num_integ(inx,iny):
     return out
 
 
+def get_u0_element (disp, potderiv, stress):
+    u_0 = 0.0
+    u_0_index = 0
+    for n in xrange(len(disp)):
+        if (potderiv[n] > stress):
+            u_0 = disp[n]
+            u_0_index = n
+            break
+
+    return(u_0, u_0_index)
+
 def get_u0 (disp, potderiv, stresses):
     """Given the derivative of the Peierls potential 
        as two arrays (dispm, potderiv) and an array 
@@ -24,11 +35,7 @@ def get_u0 (disp, potderiv, stresses):
     u_0 = zeros(stresses.shape, dtype=stresses.dtype)
     u_0_index = zeros(stresses.shape, dtype=integer) # What index do we want to start from?
     for i in xrange(len(stresses)):
-        for n in xrange(len(disp)):
-            if (potderiv[n] > stresses[i]):
-                u_0[i] = disp[n]
-                u_0_index[i] = n
-                break
+        (u_0[i], u_0_index[i]) = get_u0_element (disp, potderiv, stresses[i])
 
     return(u_0, u_0_index)
 
@@ -99,55 +106,57 @@ def get_u_max_from_h(x, h, u_0, u_0_index):
     the actual position of the kink u_max. For
     e.q. 3 of Carrez 2009"""
 
-    u_max = zeros((len(u_0),len(h)), dtype=u_0.dtype)
-    u_max_index = zeros((len(u_0),len(h)), dtype=integer)
-    for j in xrange(len(u_0)):
-        for k in xrange(len(h)):
-            for i in xrange(len(x)):
-                if (x[i] < u_0_index[j]):
-                    continue
-                if (x[i] > u_0[j]+h[k]):
-                    u_max[j,k] = u_0[j] + h[k]
-                    u_max_index[j,k] = i
-                    break
+    for i in xrange(len(x)):
+        if (x[i] < u_0_index):
+            continue
+        if (x[i] > u_0+h):
+            u_max = u_0 + h
+            u_max_index = i
+            break
 
     return(u_max, u_max_index)
- 
 
+def square_dislo_energy_screw_elas_element(x, y, h, w, roh, shear_mod, poss, burgers):
+    # screw dislocation with edge kinks. 
+    # EQ. 4 of Carrez et al. 09
+    Eelas = (shear_mod * burgers**2) / ( 2.0 * pi) * \
+            ( sqrt(w**2+h**2)-w-h \
+              + (w*log((2.0*w)/(w+sqrt(w**2+h**2)))) \
+              - ((1.0/(1.0-poss))*(w-sqrt(w**2+h**2)+h*log((h+sqrt(w**2+h**2))/w) - \
+              h*log(h/(roh*e)))) ) # NB - e is 2.71... from numpy. (not exp(roh) !!)
+    return Eelas
+
+def square_dislo_energy_peierls_element(x, y, yderv, h, w, stress):
+    (u_0, u_0_index) = get_u0_element(x, yderv, stress)
+    (u_max, u_max_index) = get_u_max_from_h(x, h, u_0, u_0_index)
+    Epeierls = 2 * num_integ(x[u_0_index+1:u_max_index], y[u_0_index+1:u_max_index])[-1] + \
+                     w * (y[u_max_index] - y[u_0_index])
+    return Epeierls
+
+def square_dislo_energy_work_element(stress, burgers, h, w):
+    return (stress * burgers * h * w)
+
+ 
+def square_dislo_energy_screw_element(x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers):
+    Epeierls = square_dislo_energy_peierls_element(x, y, yderv, h, w, stress)
+    Eelas = square_dislo_energy_screw_elas_element(x, y, h, w, roh, shear_mod, poss, burgers)
+    Ework = square_dislo_energy_work_element(stress,burgers,h,w)
+    Etot = Eelas + Epeierls - Ework
+    return (Etot, Eelas, Epeierls, Ework)
 
 def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers):
 
-
-    (u_0, u_0_index) = get_u0(x, yderv, stress)
-    (u_max, u_max_index) = get_u_max_from_h(x, h, u_0, u_0_index)
-
     Epeierls = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
-    for i in xrange(len(stress)):
-        for j in xrange(len(h)):
-            for k in xrange(len(w)):
-                Epeierls[i,j,k] = 2 * num_integ(x[u_0_index[i]+1:u_max_index[i,j]], y[u_0_index[i]+1:u_max_index[i,j]])[-1] + \
-                                    w[k] * (y[u_max_index[i,j]] - y[u_0_index[i]])
-    
-    # screw dislocation with edge kinks. 
-    # EQ. 4 of Carrez et al. 09
     Eelas = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
-    for j in xrange(len(h)):
-        for k in xrange(len(w)):
-            Eelas[:,j,k] = (shear_mod * burgers**2) / ( 2.0 * pi) * \
-                ( sqrt(w[k]**2+h[j]**2)-w[k]-h[j] \
-                  + (w[k]*log((2.0*w[k])/(w[k]+sqrt(w[k]**2+h[j]**2)))) \
-                  - ((1.0/(1.0-poss))*(w[k]-sqrt(w[k]**2+h[j]**2)+h[j]*log((h[j]+sqrt(w[k]**2+h[j]**2))/w[k]) - \
-                 h[j]*log(h[j]/(roh*e)))) ) # NB - e is 2.71... from numpy. (not exp(roh) !!)
-
     Ework = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
+    Etot = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
     for i in xrange(len(stress)):
         for j in xrange(len(h)):
             for k in xrange(len(w)):
-                Ework[i,j,k] = stress[i] * burgers * h[j] * w[k]
-
-    #Eelas = Eelas / 800
-    #Eelas = 0.0
-    Etot = Eelas + Epeierls - Ework
+                (Etot[i,j,k], Eelas[i,j,k], Epeierls[i,j,k], Ework[i,j,k]) \
+                   = square_dislo_energy_screw_element(x, y, yderv, h[j], w[k], roh, stress[i], shear_mod, poss, burgers)
+    
+    # Answer in eV
     Na = 6.022E23 # Avagadro's number
     Etot = ((Etot * Na)/1000) / 96
     Eelas = ((Eelas * Na)/1000) / 96
