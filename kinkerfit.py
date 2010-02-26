@@ -6,6 +6,7 @@ from scipy import interpolate, optimize
 from peierls import kp_energy, num_integ, kinker
 import time as time
 import peierls_pot as pot
+from convert import Pa_2_MPa, m_2_Ang, Jpm_2_eVpAng
 
 Na = 6.022E23 # Avagadro's number - should have a module of converters for units.
 
@@ -129,11 +130,11 @@ print "Solution to kink model with this paramerer set"
 
 # Plot data 
 plt.figure(1)
-plt.plot(x,y,'o',x,func(x,opt_p[:-2], x_len),'-',x,func(x,full_opt_p, x_len),'--')
-plt.legend(('Starting points', 'Fit to starting points', 'fit to expt data'))
-plt.ylabel('U (J/m)')
-plt.xlabel('u (m)')
-plt.title('U(u)')
+plt.plot(m_2_Ang(x),Jpm_2_eVpAng(y),'o',m_2_Ang(x),Jpm_2_eVpAng(func(x,opt_p[:-2], x_len)),'-',m_2_Ang(x),Jpm_2_eVpAng(func(x,full_opt_p, x_len)),'--')
+plt.legend(('Starting points', 'Fit to starting points', 'Fit to experimental data'))
+plt.ylabel('E (eV/Ang)')
+plt.xlabel('x (m)')
+plt.title('E(x)')
 
 plt.figure(2)
 plt.plot(xfine[1:],zdiff,'-',xfine_init[1:],zdiff_init,'--')
@@ -143,11 +144,11 @@ plt.legend(('fit to expt data', 'init model'))
 plt.title('Geometrical kink shape')
 
 plt.figure(3)
-plt.plot(xfine,yderfine,'-',u_0,sigma_b,'o',xfine_init,yderfine_init,'--',u_0_init,sigma_b_init,'x')
+plt.plot(m_2_Ang(xfine),Pa_2_MPa(yderfine),'-',m_2_Ang(u_0),Pa_2_MPa(sigma_b),'o',m_2_Ang(xfine_init),Pa_2_MPa(yderfine_init),'--',m_2_Ang(u_0_init),Pa_2_MPa(sigma_b_init),'x')
 plt.title('Derivative of potential')
-plt.ylabel('dU/du (MPa)')
-plt.xlabel('u (m)')
-plt.legend(('fit to expt data', 'stresses used for expt data', 'init model', 'init model stresses'))
+plt.ylabel('dE/dx (MPa)')
+plt.xlabel('x (Ang)')
+plt.legend(('Fit to expt data', '', 'Starting model', ''))
 
 plt.figure(4)
 plt.plot((sigma_b/5.0E-10),(Un*Na/1000),'--')
@@ -163,10 +164,10 @@ plt.xlabel('Tau* (MPa)')
 plt.ylabel('Un/2Uk*T_crit (K)')
 
 plt.figure(6)
-plt.plot(((Un/(kink_energy2*2.0))*t_crit_opt),(sigma_b+tau_crit_opt),'--',T_n,tau_n,'o',((Un_init/(kink_energy2_init*2.0))*t_crit),(sigma_b_init+tau_crit),'-',)
-plt.legend(('fit to expt data', 'expt data', 'init model'))
-plt.title('Critical stress / kink energy')
-plt.ylabel('Tau* (MPa)')
-plt.xlabel('Un/2Uk*T_crit (K)')
+plt.plot(((Un/(kink_energy2*2.0))*t_crit_opt),Pa_2_MPa(sigma_b+tau_crit_opt),'--',T_n,Pa_2_MPa(tau_n),'o',((Un_init/(kink_energy2_init*2.0))*t_crit),Pa_2_MPa(sigma_b_init+tau_crit),'-')
+plt.legend(('fit to experimental data', 'experimental data', 'initial model'))
+plt.title('CRSS / T')
+plt.ylabel('CRSS (MPa)')
+plt.xlabel('T (K)')
 
 plt.show()
