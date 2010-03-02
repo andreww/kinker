@@ -86,12 +86,10 @@ print "Solving kink nucleation problem with inital potential using bspline inter
 
 # Now do it again using a function...
 
-func = pot.choose_func()
+(func, p0) = pot.choose_func(params=True)
 
 # Fit this data to a sin function
-print "Fitting initial potential to sin function"
-#p0 = [2.4E-10, 2.4E-10, 1, 2, 1, 2, 3, 4, 1, 2]
-p0 = [2.4, 0.001, 0.001, 2.0, 2.0, 2.0]
+print "Fitting initial potential to function"
 opt_p = pot.fit_pot(p0, x, y, x_len, func)
 
 

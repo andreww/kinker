@@ -17,14 +17,30 @@ def load_data (filename):
     FILE.close()
     return(x,y)
 
-def choose_func():
+def choose_func(params=False):
+
     i = 0
-    funcs = (_pot_func,_simp_func) 
+    funcs = (_pot_func,_simp_func,_dorn_eq1) 
     for func in funcs:
         print str(i) + ": " + func.__doc__
         i = i + 1
     i = int(raw_input("Choose a function: "))
-    return funcs[i]
+    if (params):
+        if (i == 2):
+            p0 = [0.0, 0.001, 0.0]
+        else:
+            n = int(raw_input("Value for N (1, 3 or 5)"))
+            if (n == 1):
+                p0 = [2.4, 2.0]
+            elif (n == 3):
+                p0 = [2.4, 0.001, 0.001, 2.0, 2.0, 2.0]
+            elif (n == 5):
+                p0 = [2.4E-10, 2.4E-10, 1, 2, 1, 2, 3, 4, 1, 2]
+            else:
+                raise "Wrong answer!"
+        return (funcs[i], p0)
+    else:
+        return funcs[i]
 
 def _pot_func(x, p,x_len):
     """Function of the form y = Sum{Ai*sin(x*pi/2)*sin^Bi(x/pi)*cos(x*pi/2)}"""
@@ -52,6 +68,35 @@ def _simp_func(x, p,x_len):
                                
     value = value + x0
     return value
+
+def _dorn_eq1(x, p, x_len):
+    """Function given in eq. 1 of Dorn and Rajnak 1964 (NB: three args only)."""
+    if (len(p) != 3):
+        raise "Wrong number of arguments"
+
+    if ((p[2] > 1.0) or (p[2] < -1.0)):
+        alpha = 1.0 / p[2] 
+    else:
+        alpha = p[2]
+
+    e0 = p[0]
+    ec = p[1]
+    if (e0 > ec):
+        etmp = e0
+        e0 = ec
+        ec = etmp
+
+    # Shift x by -a/2 to match paper...
+    x = x - (x_len/2.0)
+
+    value = (ec + e0)/2.0 \
+            + ((ec+e0)/2.0) \
+              * ( alpha/2.0 + np.cos((2.0*np.pi*x)/x_len) \
+                 - (alpha/4.0)*np.cos((4.0*np.pi*x)/x_len)) 
+
+    return value
+    
+    
 
 def eval_func(x, p, x_len, func):
     return(func(x, p, x_len))
