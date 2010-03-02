@@ -215,7 +215,7 @@ def kinker (x, y, G=None, b=None, silent=False, method=None, params=None, maxx=N
     # Approximatly: 1/2Gb^2
     # FIXME: caller should do this!
     if G != None:
-        yfine = yfine + (0.5 * 160.0E9 * x_max**2.0)
+        yfine = yfine + (0.5 * G * x_max**2.0)
 
     # Calculate Sd...
     Sd = average(yfine) 
