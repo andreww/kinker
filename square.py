@@ -49,10 +49,10 @@ yfine = sp.interpolate.splev(xfine,tck,der=0)
 yderv = sp.interpolate.splev(xfine,tck,der=1)
 
 burgers = sqrt(xmax**2+xmax**2)
-h = np.array([0.12, 0.17, 0.22, 0.27, 0.32, 0.37, 0.42, 0.47, 0.52, 0.57, 0.62, 0.67, 0.72, 0.77, 0.82, 0.87, 0.92])
+h = np.array([0.12, 0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82, 0.92])
 #h = np.array([0.1, 0.52])
 h = h * xmax
-w = np.array([200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 2000, 3000, 4000])
+w = np.array([200, 300, 400, 500, 600, 700, 800, 900, 1000])
 w = w * burgers
 roh = 0.05 * 2.08 * xmax 
 stress = np.array([1.0E5, 10E6, 15E6, 20E6, 25E6, 30E6])
@@ -60,7 +60,18 @@ poss = 0.18
 shear_mod = 116.5E9
 
 
-(Etot, Eelas, Epeierls, Ework) = square_dislo_energy_screw (xfine, yfine, yderv, h, w, roh, stress, shear_mod, poss, burgers)
+(Etot, Eelas, Epeierls, Ework, dEbydH, dEbydW) = square_dislo_energy_screw (xfine, yfine, yderv, h, w, roh, stress, shear_mod, poss, burgers, dH=0.01E-10, dW=1.0E-10)
+
+deriv = abs(dEbydH) + abs(dEbydW)
+#derivderiv = np.zeros((len(stress),10,10), dtype=stress.dtype)
+#for i in xrange(len(stress)):
+#    deriv_func = sp.interpolate.interp2d(w, h, deriv[i,:,:])
+#
+#
+#    hh = np.linspace(min(h), max(h), 10)
+#    ww = np.linspace(min(w), max(w), 10)
+#    derivderiv[i,:,:] = deriv_func(ww, hh)
+#
 
 print "Etot:"
 print Etot
@@ -70,12 +81,25 @@ print "Ep:"
 print Epeierls
 print "Work:"
 print Ework
+print "dEbydH:"
+print dEbydH
+print "dEbydW:"
+print dEbydW
+print "|dE/dH| + |dE/dW|:"
+print deriv
 
 # plot the figures
+fnum = 0
 for i in xrange(len(stress)):
-    figure(i)
-    title(str(stress[i])+ " Pa")
-    contour(w,h,Etot[i,:,:], 40)
+    fnum = fnum + 1
+    figure(fnum)
+    title(str(stress[i]*1E-6)+ " MPa")
+    contour(w*1E-10,h*1E-10,Etot[i,:,:], 40)
+    colorbar()
+    fnum = fnum + 1
+    figure(fnum)
+    title("derivative of " + str(stress[i]*1E-6)+ " Pa")
+    contour(w*1E-10,h*1E-10,deriv[i,:,:], 20)
     colorbar()
 show()
 

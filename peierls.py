@@ -144,17 +144,41 @@ def square_dislo_energy_screw_element(x, y, yderv, h, w, roh, stress, shear_mod,
     Etot = Eelas + Epeierls - Ework
     return (Etot, Eelas, Epeierls, Ework)
 
-def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers):
+def square_dislo_energy_screw_deriv(x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers, dh, dw):
+    (Etot, Eelas, Epeierls, Ework) = square_dislo_energy_screw_element(x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers)
+    (Eph, a, b, c) = square_dislo_energy_screw_element(x, y, yderv, h+dh, w, roh, stress, shear_mod, poss, burgers)
+    (Emh, a, b, c) = square_dislo_energy_screw_element(x, y, yderv, h-dh, w, roh, stress, shear_mod, poss, burgers)
+    (Epw, a, b, c) = square_dislo_energy_screw_element(x, y, yderv, h, w+dw, roh, stress, shear_mod, poss, burgers)
+    (Emw, a, b, c) = square_dislo_energy_screw_element(x, y, yderv, h, w-dw, roh, stress, shear_mod, poss, burgers)
+    dEbydH = (Eph - Emh) / 2 * dh
+    dEbydW = (Epw - Emw) / 2 * dw
+    return (Etot, Eelas, Epeierls, Ework, dEbydH, dEbydW)
+
+    
+
+def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers, dH=None, dW=None):
 
     Epeierls = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
     Eelas = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
     Ework = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
     Etot = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
-    for i in xrange(len(stress)):
-        for j in xrange(len(h)):
-            for k in xrange(len(w)):
-                (Etot[i,j,k], Eelas[i,j,k], Epeierls[i,j,k], Ework[i,j,k]) \
-                   = square_dislo_energy_screw_element(x, y, yderv, h[j], w[k], roh, stress[i], shear_mod, poss, burgers)
+    dEbydW = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
+    dEbydH = zeros((len(stress),len(h),len(w)), dtype=stress.dtype)
+    if ((dH is None) and (dW is None)):
+        for i in xrange(len(stress)):
+            for j in xrange(len(h)):
+                for k in xrange(len(w)):
+                    (Etot[i,j,k], Eelas[i,j,k], Epeierls[i,j,k], Ework[i,j,k]) \
+                       = square_dislo_energy_screw_element(x, y, yderv, h[j], w[k], roh, stress[i], shear_mod, poss, burgers)
+    elif ((dH is None) or (dW is None)):
+        raise "Cannot handle deriv subsets"
+    else:
+        for i in xrange(len(stress)):
+            for j in xrange(len(h)):
+                for k in xrange(len(w)):
+                    (Etot[i,j,k], Eelas[i,j,k], Epeierls[i,j,k], Ework[i,j,k], dEbydH[i,j,k], dEbydW[i,j,k]) \
+                       = square_dislo_energy_screw_deriv(x, y, yderv, h[j], w[k], roh, stress[i], shear_mod, poss, burgers, dH, dW)
+        
     
     # Answer in eV
     Na = 6.022E23 # Avagadro's number
@@ -162,7 +186,7 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
     Eelas = ((Eelas * Na)/1000) / 96
     Epeierls = ((Epeierls * Na) / 1000) / 96
     Ework = ((Ework * Na) / 1000) / 96
-    return (Etot, Eelas, Epeierls, Ework)
+    return (Etot, Eelas, Epeierls, Ework, dEbydH, dEbydW)
 
     
 
