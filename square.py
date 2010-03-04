@@ -49,13 +49,14 @@ yfine = sp.interpolate.splev(xfine,tck,der=0)
 yderv = sp.interpolate.splev(xfine,tck,der=1)
 
 burgers = sqrt(xmax**2+xmax**2)
-h = np.array([0.12, 0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82, 0.92])
+h = np.array([0.02, 0.07, 0.12, 0.17, 0.22, 0.27, 0.32, 0.37, 0.42, 0.47, 0.52, 0.57,  0.62, 0.67, 0.72, 0.77, 0.82, 0.87, 0.92, 0.97])
 #h = np.array([0.1, 0.52])
 h = h * xmax
-w = np.array([200, 300, 400, 500, 600, 700, 800, 900, 1000])
+w = np.array([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500])
 w = w * burgers
 roh = 0.05 * 2.08 * xmax 
-stress = np.array([1.0E5, 10E6, 15E6, 20E6, 25E6, 30E6])
+#stress = np.array([1.0E5, 10E6, 15E6, 20E6, 25E6, 30E6])
+stress = np.array([20E6])
 poss = 0.18
 shear_mod = 116.5E9
 
@@ -88,18 +89,54 @@ print dEbydW
 print "|dE/dH| + |dE/dW|:"
 print deriv
 
+allH = np.zeros(deriv.shape)
+allW = np.zeros(deriv.shape)
+print allW.shape
+print deriv.shape
+print w.shape
+for i in xrange(len(stress)):
+    for j in xrange(len(w)):
+        for k in xrange(len(h)):
+            # Don't really understand the inversion 
+            # of axes here...
+            allW[i,j,k] = w[k]
+            allH[i,j,k] = h[j]
+
+#print deriv.argmin(axis=0)
+Ecrit = [0.00]*len(stress)
+Hcrit = [0.00]*len(stress)
+Wcrit = [0.00]*len(stress)
+for i in xrange(len(stress)):
+    lin_deriv = deriv[i,:,:].ravel()
+    lin_allW = allW[i,:,:].ravel()
+    lin_allH = allH[i,:,:].ravel()
+    lin_Etot = Etot[i,:,:].ravel()
+    pos = lin_deriv.argmin()
+    Ecrit[i] = lin_Etot[pos]
+    Wcrit[i] = lin_allW[pos]/1E-10
+    Hcrit[i] = lin_allH[pos]/1E-10
+    print 'Stress: ' + str(stress[i])
+    print 'Ecrit: ' + str(Ecrit[i])
+    print 'Wcrit: ' + str(Wcrit[i])
+    print 'Hcrit: ' + str(Hcrit[i])
+
+
 # plot the figures
 fnum = 0
 for i in xrange(len(stress)):
     fnum = fnum + 1
     figure(fnum)
     title(str(stress[i]*1E-6)+ " MPa")
-    contour(w*1E-10,h*1E-10,Etot[i,:,:], 40)
+    contour(w/1E-10,h/1E-10,Etot[i,:,:], 40)
     colorbar()
+    scatter(Wcrit[i], Hcrit[i], marker='o')
+    scatter(allW[i,:,:]/1E-10, allH[i,:,:]/1E-10, marker='x')
     fnum = fnum + 1
     figure(fnum)
     title("derivative of " + str(stress[i]*1E-6)+ " Pa")
-    contour(w*1E-10,h*1E-10,deriv[i,:,:], 20)
+    contour(w/1E-10,h/1E-10,deriv[i,:,:], 20)
     colorbar()
+    scatter(Wcrit[i], Hcrit[i], marker='o')
+    scatter(allW[i,:,:]/1E-10, allH[i,:,:]/1E-10, marker='x')
 show()
 
