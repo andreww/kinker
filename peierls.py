@@ -106,8 +106,10 @@ def get_u_max_from_h(x, h, u_0, u_0_index):
     the actual position of the kink u_max. For
     e.q. 3 of Carrez 2009"""
 
+    u_max = max(x)
+    u_max_index = len(x)
     for i in xrange(len(x)):
-        if (x[i] < u_0_index):
+        if (x[i] < u_0):
             continue
         if (x[i] > u_0+h):
             u_max = u_0 + h
@@ -129,8 +131,11 @@ def square_dislo_energy_screw_elas_element(x, y, h, w, roh, shear_mod, poss, bur
 def square_dislo_energy_peierls_element(x, y, yderv, h, w, stress):
     (u_0, u_0_index) = get_u0_element(x, yderv, stress)
     (u_max, u_max_index) = get_u_max_from_h(x, h, u_0, u_0_index)
-    Epeierls = 2 * num_integ(x[u_0_index+1:u_max_index], y[u_0_index+1:u_max_index])[-1] + \
+    if (h+u_0 < max(x)):
+        Epeierls = 2 * num_integ(x[u_0_index+1:u_max_index], y[u_0_index+1:u_max_index])[-1] + \
                      w * (y[u_max_index] - y[u_0_index])
+    else:
+        Epeierls = None
     return Epeierls
 
 def square_dislo_energy_work_element(stress, burgers, h, w):
@@ -139,9 +144,15 @@ def square_dislo_energy_work_element(stress, burgers, h, w):
  
 def square_dislo_energy_screw_element(x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers):
     Epeierls = square_dislo_energy_peierls_element(x, y, yderv, h, w, stress)
-    Eelas = square_dislo_energy_screw_elas_element(x, y, h, w, roh, shear_mod, poss, burgers)
-    Ework = square_dislo_energy_work_element(stress,burgers,h,w)
-    Etot = Eelas + Epeierls - Ework
+    if Epeierls is None:
+        Epeierls = 0.0
+        Eelas = 0.0
+        Ework = 0.0
+        Etot = 0.0
+    else:
+        Eelas = square_dislo_energy_screw_elas_element(x, y, h, w, roh, shear_mod, poss, burgers)
+        Ework = square_dislo_energy_work_element(stress,burgers,h,w)
+        Etot = Eelas + Epeierls - Ework
     return (Etot, Eelas, Epeierls, Ework)
 
 def square_dislo_energy_screw_deriv(x, y, yderv, h, w, roh, stress, shear_mod, poss, burgers, dh, dw):

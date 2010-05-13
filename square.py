@@ -56,7 +56,7 @@ w = np.array([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1500, 2000,
 w = w * burgers
 roh = 0.05 * 2.08 * xmax 
 #stress = np.array([1.0E5, 10E6, 15E6, 20E6, 25E6, 30E6])
-stress = np.array([20E6])
+stress = np.array([5E6])
 poss = 0.18
 shear_mod = 116.5E9
 
