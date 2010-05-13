@@ -124,13 +124,12 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     print "Testing the Peiels potential fitter..." 
 
-    func = choose_func()
+    (func, p0) = choose_func(params=True)
 
     basename = raw_input("Basename for potetial input file (input file is basname.dat): ")
     filename = basename + '.dat'
     (x,y) = load_data(filename)
 
-    p0 = [2.4E-10, 2.4E-10, 1, 2, 1, 2, 3, 4, 1, 2]
     opt_p = fit_pot(p0, x, y, max(x), func)
     
 
