@@ -65,7 +65,7 @@ exptdata = raw_input("Expt data (input is basname.dat): ")
 (T_n,expt_tau) = load_data(exptdata)
 # Convert from MPa to Pa and subtract tau_crit (15 MPa, T_crit is 500 K, handled in error func.)
 tau_n = expt_tau*1E6
-t_crit = 650
+t_crit = float(raw_input("Estimate t_crit (where tau ~10 MPa, used to use 650K): "))
 tau_crit = 10.0E6
 
 # Plot data 
