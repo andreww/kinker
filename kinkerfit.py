@@ -106,6 +106,7 @@ tau_n = expt_tau*1E6
 # setup tau_crit and t_crit (15 MPa, T_crit is 500 K, handled in error func.)
 tau_crit = 10.0E6
 t_crit = 650
+t_crit = 450
 opt_p = np.append(opt_p,t_crit)
 opt_p = np.append(opt_p,tau_crit)
 
