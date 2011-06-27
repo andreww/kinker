@@ -37,7 +37,7 @@ def choose_func(params=False):
             elif (n == 5):
                 p0 = [2.4E-10, 2.4E-10, 1, 2, 1, 2, 3, 4, 1, 2]
             else:
-                raise "Wrong answer!"
+                raise ValueError("Wrong answer!")
         return (funcs[i], p0)
     else:
         return funcs[i]
@@ -72,7 +72,7 @@ def _simp_func(x, p,x_len):
 def _dorn_eq1(x, p, x_len):
     """Function given in eq. 1 of Dorn and Rajnak 1964 (NB: three args only)."""
     if (len(p) != 3):
-        raise "Wrong number of arguments"
+        raise ValueError("Wrong number of arguments")
 
     if ((p[2] > 1.0) or (p[2] < -1.0)):
         alpha = 1.0 / p[2] 

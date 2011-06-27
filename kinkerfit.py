@@ -31,7 +31,7 @@ def errfunc(p, x, y):
     # as they get the low stress result (they are > max calc T) which is 0.1% of
     # sigma_P (in kinker) and this is equal to crit_stress (see above). 
     if (np.all(np.diff(calc_y[::-1]) <= 0)):
-        raise "Cannot intepolate on temperature"
+        raise ValueError("Cannot intepolate on temperature")
     interp_calc_x = np.interp(T_n[::-1],calc_y[::-1],calc_x[::-1])
     interp_calc_x = interp_calc_x[::-1] # Can we not do this in place above?
 

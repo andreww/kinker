@@ -182,7 +182,7 @@ def square_dislo_energy_screw (x, y, yderv, h, w, roh, stress, shear_mod, poss, 
                     (Etot[i,j,k], Eelas[i,j,k], Epeierls[i,j,k], Ework[i,j,k]) \
                        = square_dislo_energy_screw_element(x, y, yderv, h[j], w[k], roh, stress[i], shear_mod, poss, burgers)
     elif ((dH is None) or (dW is None)):
-        raise "Cannot handle deriv subsets"
+        raise ValueError("Cannot handle deriv subsets")
     else:
         for i in xrange(len(stress)):
             for j in xrange(len(h)):
